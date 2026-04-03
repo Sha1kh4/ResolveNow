@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+from pydantic_settings import BaseSettings
 
 
 BASE_DIR = Path(__file__).resolve().parents[3]
@@ -113,10 +114,10 @@ def get_settings() -> Settings:
         smtp_password=os.getenv("SMTP_PASSWORD", ""),
         smtp_from_email=os.getenv("SMTP_FROM_EMAIL", "noreply@example.com"),
         smtp_from_name=os.getenv("SMTP_FROM_NAME", "Complaint Management System"),
-        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID", ""),
-        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY", ""),
-        aws_region=os.getenv("AWS_REGION", "ap-south-1"),
-        s3_bucket_name=os.getenv("S3_BUCKET_NAME", "complaint-management-files"),
+        aws_access_key_id=os.getenv("aws_access_key_id", ""),
+        aws_secret_access_key=os.getenv("aws_secret_access_key", ""),
+        aws_region=os.getenv("aws_region", "ap-south-1"),
+        s3_bucket_name=os.getenv("s3_bucket_name", "complaint-management-files"),
     )
 
 
