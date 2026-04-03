@@ -35,6 +35,29 @@ class UserRepository:
             {"email_verification.token_hash": token_hash},
         )
 
+    async def list_by_role(
+        self,
+        role: str,
+        *,
+        skip: int = 0,
+        limit: Optional[int] = None,
+    ) -> list[dict[str, Any]]:
+        users_cursor = self.collection.find({"role": role}).sort("created_at", -1).skip(skip)
+        if limit is not None:
+            users_cursor = users_cursor.limit(limit)
+        users = await _run_db_call(users_cursor.to_list, length=None)
+        return users or []
+
+    async def count_by_role(self, role: str) -> int:
+        return await _run_db_call(self.collection.count_documents, {"role": role})
+
+    async def list_by_ids(self, user_ids: list[Any]) -> list[dict[str, Any]]:
+        if not user_ids:
+            return []
+        users_cursor = self.collection.find({"_id": {"$in": user_ids}})
+        users = await _run_db_call(users_cursor.to_list, length=None)
+        return users or []
+
     async def create_user(self, user_document: dict[str, Any]) -> dict[str, Any]:
         insert_result = await _run_db_call(self.collection.insert_one, user_document)
         inserted_id = getattr(insert_result, "inserted_id", None)

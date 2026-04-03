@@ -6,7 +6,7 @@ from app.models.user_model import UserRole
 from app.repositories.user_repository import UserRepository
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login-oauth")
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:

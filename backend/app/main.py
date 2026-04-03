@@ -8,6 +8,8 @@ from app.api.routes.admin_routes import router as admin_router
 from app.api.routes.auth_routes import router as auth_router
 from app.config.database import close_mongo_connection, connect_to_mongo, initialize_database
 from app.config.settings import settings
+from app.seeds.department_seed import seed_departments
+from app.seeds.user_seed import seed_users
 from app.services.auth_service import AuthService
 
 
@@ -18,6 +20,8 @@ auth_service = AuthService()
 async def lifespan(_: FastAPI):
     await connect_to_mongo()
     await initialize_database()
+    await seed_departments()
+    await seed_users()
     await auth_service.ensure_initial_admin()
     try:
         yield
