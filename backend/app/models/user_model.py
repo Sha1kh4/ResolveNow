@@ -8,7 +8,6 @@ from app.models.base_model import TimestampMixin
 
 
 class UserRole(str, Enum):
-    USER = "user"
     STUDENT = "student"
     FACULTY = "faculty"
     ADMIN = "admin"

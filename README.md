@@ -10,9 +10,9 @@ It is designed to support complaint submission, department-based routing, facult
 
 ## Complaint Management System - System Overview
 
-The Complaint Management System is a web-based application developed using `FastAPI` as the backend framework, `MongoDB` as the database, and `React` as the frontend interface. The system is designed to streamline the process of submitting, managing, and resolving complaints within an organization or institution. It supports three primary roles: `User (Student)`, `Faculty`, and `Admin`, each with specific responsibilities and permissions.
+The Complaint Management System is a web-based application developed using `FastAPI` as the backend framework, `MongoDB` as the database, and `React` as the frontend interface. The system is designed to streamline the process of submitting, managing, and resolving complaints within an organization or institution. It supports three primary roles: `Student`, `Faculty`, and `Admin`, each with specific responsibilities and permissions.
 
-The system begins with a unified registration process where both students and faculty members initially register as users. During registration, users provide their email credentials, after which an email verification process is triggered to ensure the authenticity of the account. Only after successful email verification is the user officially registered in the system. The Admin then reviews the list of registered users and has the authority to assign selected users as faculty members. These faculty members are further mapped to specific complaint departments based on administrative decisions.
+The system begins with a unified registration process where both students and faculty members register directly with their selected role. During registration, users provide their email credentials, after which an email verification process is triggered to ensure the authenticity of the account. Only after successful email verification is the account officially activated in the system according to its role workflow. The Admin then reviews the list of registered faculty members and has the authority to approve them and map them to specific complaint departments based on administrative decisions.
 
 The system consists of four main complaint departments: `Infrastructural`, `Behavioural`, `Academic`, and `General`. When a user submits a complaint, they are required to provide essential details such as the complaint title and description. Additionally, the system allows users to attach supporting media files, including images and videos. These media files are securely stored using `Amazon S3` for scalable and reliable file management. During submission, the user selects the appropriate department from a dropdown menu, and the complaint is automatically routed to that department for processing.
 
@@ -52,6 +52,23 @@ ComplaintManagementSystem/
 |-- .env
 `-- README.md
 ```
+
+## Backend Collections
+
+The backend currently works with these main MongoDB collections:
+
+- `users`
+  Roles are limited to `student`, `faculty`, and `admin`
+- `departments`
+  Stores department name, description, default priority, and mapped faculty IDs
+- `complaints`
+  Stores complaint details, department mapping, priority, deadline, and status
+- `faculty_assignments`
+  Stores complaint-to-faculty assignment records created through round robin routing
+- `attachments`
+  Stores uploaded attachment metadata
+- `notifications`
+  Stores notification records for complaint events
 
 ## Prerequisites
 
