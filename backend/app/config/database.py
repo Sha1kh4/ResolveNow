@@ -8,12 +8,6 @@ except ModuleNotFoundError:
     AsyncIOMotorClient = None
     AsyncIOMotorDatabase = Any
 
-try:
-    from pymongo import MongoClient
-except ModuleNotFoundError:
-    MongoClient = None
-
-
 mongodb_client: Any = None
 database: Any = None
 DEFAULT_COLLECTIONS = [
