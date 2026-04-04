@@ -6,16 +6,17 @@ const AUTH_USER_KEY = "cms_auth_user";
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1",
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // ❌ REMOVE default Content-Type
 });
 
 apiClient.interceptors.request.use((config) => {
   const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
+
+  // 🔥 IMPORTANT: Let axios handle FormData automatically
   return config;
 });
 
@@ -45,16 +46,21 @@ apiClient.interceptors.response.use(
         { refresh_token: refreshToken },
         {
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "application/json", // ✅ OK here (JSON request)
           },
         }
       );
 
-      const { access_token: newAccessToken, refresh_token: newRefreshToken, user } =
-        refreshResponse.data;
+      const {
+        access_token: newAccessToken,
+        refresh_token: newRefreshToken,
+        user,
+      } = refreshResponse.data;
+
       localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
       localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+
       originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
       return apiClient(originalRequest);
@@ -62,6 +68,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem(ACCESS_TOKEN_KEY);
       localStorage.removeItem(REFRESH_TOKEN_KEY);
       localStorage.removeItem(AUTH_USER_KEY);
+
       return Promise.reject(refreshError);
     }
   }

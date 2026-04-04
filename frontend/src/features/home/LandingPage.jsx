@@ -184,7 +184,7 @@ function LandingPage() {
                 Live Workflow
               </div>
               <div style={{ marginTop: "18px", fontSize: "28px", fontWeight: 800 }}>
-                Complaint {"->"} Department {"->"} Faculty {"->"} Resolution
+                
               </div>
               <div style={{ marginTop: "12px", lineHeight: 1.7, color: "rgba(255,255,255,0.78)" }}>
                 Keep every complaint visible, assigned, and accountable with timestamped
