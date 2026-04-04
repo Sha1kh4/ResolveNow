@@ -57,7 +57,7 @@ function Login() {
       const response = await authService.login(form);
       setMessage(`Welcome back, ${response.user.name}.`);
       navigate(
-        response.user.role === "admin" ? "/admin/dashboard" : "/",
+        response.user.role === "admin" ? "/admin/dashboard" : "/dashboard",
         { replace: true }
       );
     } catch (requestError) {
