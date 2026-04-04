@@ -8,9 +8,7 @@ import Login from "../features/auth/Login";
 import Register from "../features/auth/Register";
 import LandingPage from "../features/home/LandingPage";
 import VerifyEmail from "../features/auth/VerifyEmail";
-import ComplaintList from "../features/complaints/ComplaintList";
-import CreateComplaint from "../pages/user/CreateComplaint";
-import MyComplaints from "../pages/user/MyComplaints";
+import StudentComplaintDashboard from "../features/complaints/StudentComplaintDashboard";
 
 function AppRoutes() {
   return (
@@ -23,10 +21,10 @@ function AppRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
-      <Route path="/complaint/create" element={<CreateComplaint />} />
-      <Route path="/dashboard" element={<ComplaintList />} />
-      <Route path="/create-complaint" element={<CreateComplaint />} />
-      <Route path="/my-complaints" element={<MyComplaints />} /> 
+      <Route path="/dashboard" element={<StudentComplaintDashboard initialView="overview" />} />
+      <Route path="/complaint/create" element={<StudentComplaintDashboard initialView="create" />} />
+      <Route path="/create-complaint" element={<StudentComplaintDashboard initialView="create" />} />
+      <Route path="/my-complaints" element={<StudentComplaintDashboard initialView="list" />} />
     </Routes>
   );
 }

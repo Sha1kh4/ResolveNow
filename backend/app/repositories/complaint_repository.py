@@ -26,6 +26,28 @@ class ComplaintRepository:
         )
         return await complaints_cursor.to_list(length=None)
 
+    async def update_assignment_status(
+        self,
+        complaint_id: Any,
+        *,
+        status: str,
+        updated_at: Any,
+    ) -> None:
+        db = get_database()
+        normalized_complaint_id = complaint_id
+        if isinstance(complaint_id, str) and ObjectId.is_valid(complaint_id):
+            normalized_complaint_id = ObjectId(complaint_id)
+
+        await db["complaints"].update_one(
+            {"_id": normalized_complaint_id},
+            {
+                "$set": {
+                    "status": status,
+                    "updated_at": updated_at,
+                }
+            },
+        )
+
 
 
 class ComplaintRepository:

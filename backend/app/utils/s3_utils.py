@@ -14,7 +14,10 @@ s3 = boto3.client(
 def upload_file(file, filename: str) -> str:
     s3.upload_fileobj(file, settings.s3_bucket_name, filename)
 
-    return f"https://{settings.S3_BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/{filename}"
+    return (
+        f"https://{settings.s3_bucket_name}.s3."
+        f"{settings.aws_region}.amazonaws.com/{filename}"
+    )
 
 
 def generate_filename(original_filename: str) -> str:
