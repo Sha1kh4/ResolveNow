@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic_core import core_schema
 
 try:
     from bson import ObjectId
@@ -16,9 +17,10 @@ except ModuleNotFoundError:
 
 
 class PyObjectId(ObjectId):
+
     @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+    def __get_pydantic_core_schema__(cls, source_type, handler):
+        return core_schema.no_info_plain_validator_function(cls.validate)
 
     @classmethod
     def validate(cls, value: Any) -> ObjectId:
@@ -29,7 +31,7 @@ class PyObjectId(ObjectId):
         raise ValueError("Invalid ObjectId")
 
     @classmethod
-    def __get_pydantic_json_schema__(cls, core_schema: Any, handler: Any) -> dict[str, Any]:
+    def __get_pydantic_json_schema__(cls, core_schema, handler):
         return {"type": "string"}
 
 

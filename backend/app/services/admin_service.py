@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 
 from app.models.base_model import ObjectId
 from app.models.complaint_model import ComplaintPriority
-from app.models.user_model import UserRole
+from app.models.user_model import UserRole, UserStatus
 from app.repositories.complaint_repository import ComplaintRepository
 from app.repositories.department_repository import DepartmentRepository
 from app.repositories.user_repository import UserRepository
@@ -33,6 +33,7 @@ class AdminService:
             name=user["name"],
             email=user["email"],
             role=user["role"],
+            user_status=user.get("user_status") or UserStatus.ACTIVE.value,
             created_at=user["created_at"],
         )
 
@@ -81,9 +82,13 @@ class AdminService:
         page: int,
         page_size: int,
     ) -> PaginatedAdminUsersResponse:
-        total = await self.user_repository.count_by_role(UserRole.USER.value)
-        users = await self.user_repository.list_by_role(
-            UserRole.USER.value,
+        filters = {
+            "role": UserRole.FACULTY.value,
+            "user_status": UserStatus.PENDING_APPROVAL.value,
+        }
+        total = await self.user_repository.count_by_filters(filters)
+        users = await self.user_repository.list_by_filters(
+            filters,
             skip=(page - 1) * page_size,
             limit=page_size,
         )
@@ -198,10 +203,16 @@ class AdminService:
                 detail="User not found.",
             )
 
-        if user.get("role") != UserRole.USER.value:
+        if user.get("role") != UserRole.FACULTY.value:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only users with role 'user' can be assigned as faculty.",
+                detail="Only faculty users can be assigned to departments.",
+            )
+
+        if user.get("user_status") != UserStatus.PENDING_APPROVAL.value:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only faculty users pending approval can be assigned to departments.",
             )
 
         department = await self.department_repository.find_by_id(department_id)
@@ -215,7 +226,7 @@ class AdminService:
         await self.user_repository.update_user(
             user["_id"],
             {
-                "role": UserRole.FACULTY.value,
+                "user_status": UserStatus.ACTIVE.value,
                 "updated_at": now,
             },
         )
@@ -232,7 +243,7 @@ class AdminService:
         updated_user = await self.user_repository.find_by_id(user["_id"])
         updated_department = await self.department_repository.find_by_id(department["_id"])
         return FacultyAssignmentResponse(
-            message="Faculty role assigned and department mapping updated successfully.",
+            message="Faculty approved and department mapping updated successfully.",
             user=self._map_user(updated_user),
             department=self._map_department(updated_department),
         )

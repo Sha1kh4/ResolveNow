@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from app.config.security import decode_token
-from app.models.user_model import UserRole
+from app.models.user_model import UserRole, UserStatus
 from app.repositories.user_repository import UserRepository
 
 
@@ -30,6 +30,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive.",
+        )
+
+    user_status = user.get("user_status")
+    if user_status and user_status != UserStatus.ACTIVE.value:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is not active.",
         )
 
     return user

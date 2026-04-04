@@ -3,13 +3,14 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.models.user_model import UserRole
+from app.models.user_model import UserRole, UserStatus
 
 
 class UserRegisterRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
+    role: UserRole
 
 
 class VerifyEmailRequest(BaseModel):
@@ -36,6 +37,7 @@ class AuthUserResponse(BaseModel):
     name: str
     email: EmailStr
     role: UserRole
+    user_status: UserStatus
     is_email_verified: bool
     created_at: datetime
 

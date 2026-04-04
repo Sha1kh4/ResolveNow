@@ -4,7 +4,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 from app.models.complaint_model import ComplaintPriority, ComplaintStatus
 from app.models.department_model import DepartmentName, DepartmentPriority
-from app.models.user_model import UserRole
+from app.models.user_model import UserRole, UserStatus
 
 
 class AdminUserListItem(BaseModel):
@@ -12,6 +12,7 @@ class AdminUserListItem(BaseModel):
     name: str
     email: EmailStr
     role: UserRole
+    user_status: UserStatus
     created_at: datetime
 
 

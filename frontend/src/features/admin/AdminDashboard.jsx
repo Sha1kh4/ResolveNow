@@ -79,11 +79,11 @@ const adminCards = [
   {
     title: "Manage Faculties",
     description:
-      "Promote verified users into faculty members and connect each faculty account to the department that should handle their work.",
+      "Review pending faculty accounts, approve them, and connect each one to the department that should handle their work.",
     badge: "Role Control",
     route: "/admin/faculty-assignment",
     action: "Open Faculty Manager",
-    stats: "User -> Faculty -> Department",
+    stats: "Faculty -> Approval -> Department",
     accent: "linear-gradient(135deg, rgba(15, 118, 110, 0.12) 0%, rgba(20, 83, 45, 0.08) 100%)",
     tone: "#0f766e",
   },
@@ -221,7 +221,7 @@ function AdminDashboard() {
                 Admin Workflow
               </div>
               <div style={{ marginTop: "18px", fontSize: "28px", fontWeight: 800 }}>
-                Users {"->"} Faculties {"->"} Departments {"->"} Complaints
+                Faculty Requests {"->"} Approval {"->"} Departments {"->"} Complaints
               </div>
               <div
                 style={{

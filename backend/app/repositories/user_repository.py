@@ -51,6 +51,22 @@ class UserRepository:
     async def count_by_role(self, role: str) -> int:
         return await _run_db_call(self.collection.count_documents, {"role": role})
 
+    async def list_by_filters(
+        self,
+        filters: dict[str, Any],
+        *,
+        skip: int = 0,
+        limit: Optional[int] = None,
+    ) -> list[dict[str, Any]]:
+        users_cursor = self.collection.find(filters).sort("created_at", -1).skip(skip)
+        if limit is not None:
+            users_cursor = users_cursor.limit(limit)
+        users = await _run_db_call(users_cursor.to_list, length=None)
+        return users or []
+
+    async def count_by_filters(self, filters: dict[str, Any]) -> int:
+        return await _run_db_call(self.collection.count_documents, filters)
+
     async def list_by_ids(self, user_ids: list[Any]) -> list[dict[str, Any]]:
         if not user_ids:
             return []

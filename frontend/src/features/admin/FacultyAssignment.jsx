@@ -87,7 +87,7 @@ function FacultyAssignment() {
       setError(
         getUserFacingApiError(
           requestError,
-          "Unable to load the faculty assignment workflow right now."
+          "Unable to load the faculty approval workflow right now."
         )
       );
     } finally {
@@ -134,7 +134,7 @@ function FacultyAssignment() {
         department_id: departmentId,
       });
       setMessage(
-        `${response.user.name} is now faculty and mapped to ${response.department.name}.`
+        `${response.user.name} is now active and mapped to ${response.department.name}.`
       );
       const nextPage =
         users.length === 1 && pagination.page > 1 ? pagination.page - 1 : pagination.page;
@@ -143,7 +143,7 @@ function FacultyAssignment() {
       setError(
         getUserFacingApiError(
           requestError,
-          "Unable to assign the selected user as faculty right now."
+          "Unable to approve the selected faculty member right now."
         )
       );
     } finally {
@@ -192,12 +192,11 @@ function FacultyAssignment() {
               Admin Workflow
             </div>
             <h1 style={{ margin: "14px 0 8px", fontSize: "38px" }}>
-              Assign faculty to departments
+              Approve faculty and assign departments
             </h1>
             <p style={{ margin: 0, color: "#475569", lineHeight: 1.7, maxWidth: "720px" }}>
-              Review every registered user with the <strong>user</strong> role, promote the
-              right person to <strong>faculty</strong>, and map them to one department from
-              the dropdown.
+              Review faculty accounts waiting for approval, connect each one to the
+              right department, and activate them in a single step.
             </p>
           </div>
           <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
@@ -240,7 +239,7 @@ function FacultyAssignment() {
               }}
             >
               <div style={{ color: "#64748b", fontSize: "13px", marginBottom: "8px" }}>
-                Pending users
+                Pending faculty
               </div>
               <div style={{ fontSize: "32px", fontWeight: 800 }}>{pagination.total}</div>
             </div>
@@ -290,7 +289,7 @@ function FacultyAssignment() {
           ) : null}
 
           {loading ? (
-            <div style={{ color: "#475569" }}>Loading admin workflow...</div>
+            <div style={{ color: "#475569" }}>Loading faculty approval workflow...</div>
           ) : null}
 
           {!loading && users.length === 0 ? (
@@ -303,7 +302,7 @@ function FacultyAssignment() {
                 color: "#475569",
               }}
             >
-              No regular users are waiting for faculty assignment right now.
+              No faculty accounts are waiting for approval right now.
             </div>
           ) : null}
 
@@ -346,6 +345,9 @@ function FacultyAssignment() {
                     <h2 style={{ margin: "14px 0 8px", fontSize: "24px" }}>{user.name}</h2>
                     <p style={{ margin: "0 0 18px", color: "#475569", lineHeight: 1.7 }}>
                       {user.email}
+                    </p>
+                    <p style={{ margin: "0 0 18px", color: "#0e7490", fontWeight: 600 }}>
+                      Status: {user.user_status.replaceAll("_", " ")}
                     </p>
 
                     <label
@@ -391,8 +393,8 @@ function FacultyAssignment() {
                       }}
                     >
                       {submittingUserId === user.id
-                        ? "Assigning faculty..."
-                        : "Make Faculty"}
+                        ? "Approving faculty..."
+                        : "Approve Faculty"}
                     </button>
                   </article>
                 ))}

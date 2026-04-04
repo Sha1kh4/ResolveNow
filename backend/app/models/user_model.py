@@ -9,8 +9,15 @@ from app.models.base_model import TimestampMixin
 
 class UserRole(str, Enum):
     USER = "user"
+    STUDENT = "student"
     FACULTY = "faculty"
     ADMIN = "admin"
+
+
+class UserStatus(str, Enum):
+    PENDING_EMAIL_VERIFICATION = "pending_email_verification"
+    PENDING_APPROVAL = "pending_approval"
+    ACTIVE = "active"
 
 
 class EmailVerificationToken(BaseModel):
@@ -32,7 +39,8 @@ class User(TimestampMixin):
     name: str
     email: EmailStr
     password_hash: str
-    role: UserRole = UserRole.USER
+    role: UserRole = UserRole.STUDENT
+    user_status: UserStatus = UserStatus.PENDING_EMAIL_VERIFICATION
     is_email_verified: bool = False
     is_active: bool = True
     email_verification: Optional[EmailVerificationToken] = None

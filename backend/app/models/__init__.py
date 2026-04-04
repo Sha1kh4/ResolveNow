@@ -3,7 +3,13 @@ from app.models.complaint_model import Complaint, ComplaintPriority, ComplaintSt
 from app.models.department_model import Department, DepartmentName, DepartmentPriority
 from app.models.faculty_assignment_model import FacultyAssignment
 from app.models.notification_model import Notification, NotificationType
-from app.models.user_model import EmailVerificationToken, RefreshTokenSession, User, UserRole
+from app.models.user_model import (
+    EmailVerificationToken,
+    RefreshTokenSession,
+    User,
+    UserRole,
+    UserStatus,
+)
 
 __all__ = [
     "Attachment",
@@ -21,4 +27,5 @@ __all__ = [
     "RefreshTokenSession",
     "User",
     "UserRole",
+    "UserStatus",
 ]

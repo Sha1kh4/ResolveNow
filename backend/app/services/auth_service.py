@@ -14,7 +14,7 @@ from app.config.security import (
     verify_password,
 )
 from app.config.settings import settings
-from app.models.user_model import UserRole
+from app.models.user_model import UserRole, UserStatus
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth_schema import (
     AdminCreateRequest,
@@ -33,12 +33,22 @@ class AuthService:
         self.user_repository = UserRepository()
 
     @staticmethod
+    def _resolve_user_status(user: dict) -> str:
+        stored_status = user.get("user_status")
+        if stored_status:
+            return stored_status
+        if not user.get("is_email_verified"):
+            return UserStatus.PENDING_EMAIL_VERIFICATION.value
+        return UserStatus.ACTIVE.value
+
+    @staticmethod
     def _map_user_response(user: dict) -> AuthUserResponse:
         return AuthUserResponse(
             id=str(user["_id"]),
             name=user["name"],
             email=user["email"],
             role=user["role"],
+            user_status=AuthService._resolve_user_status(user),
             is_email_verified=user["is_email_verified"],
             created_at=user["created_at"],
         )
@@ -67,6 +77,7 @@ class AuthService:
             "email": normalized_email,
             "password_hash": hash_password(password),
             "role": UserRole.ADMIN.value,
+            "user_status": UserStatus.ACTIVE.value,
             "is_email_verified": True,
             "is_active": True,
             "email_verification": None,
@@ -130,13 +141,20 @@ class AuthService:
                 detail="A user with this email already exists.",
             )
 
+        if payload.role not in {UserRole.STUDENT, UserRole.FACULTY}:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only student and faculty registrations are supported.",
+            )
+
         verification_token = generate_email_verification_token()
         current_time = datetime.utcnow()
         user_document = {
             "name": payload.name,
             "email": payload.email.lower(),
             "password_hash": hash_password(payload.password),
-            "role": UserRole.USER.value,
+            "role": payload.role.value,
+            "user_status": UserStatus.PENDING_EMAIL_VERIFICATION.value,
             "is_email_verified": False,
             "is_active": True,
             "email_verification": {
@@ -183,18 +201,36 @@ class AuthService:
             )
 
         if user.get("is_email_verified"):
+            current_status = self._resolve_user_status(user)
+            if current_status == UserStatus.PENDING_APPROVAL.value:
+                return VerifyEmailResponse(
+                    message="Email is already verified. Your faculty account is still waiting for admin approval."
+                )
             return VerifyEmailResponse(message="Email is already verified.")
 
         now = datetime.utcnow()
+        user_role = user.get("role")
+        next_status = (
+            UserStatus.PENDING_APPROVAL.value
+            if user_role == UserRole.FACULTY.value
+            else UserStatus.ACTIVE.value
+        )
         await self.user_repository.update_user(
             user["_id"],
             {
                 "is_email_verified": True,
+                "user_status": next_status,
                 "updated_at": now,
                 "email_verification.verified_at": now,
             },
         )
-        return VerifyEmailResponse(message="Email verified successfully.")
+        if next_status == UserStatus.PENDING_APPROVAL.value:
+            return VerifyEmailResponse(
+                message="Email verified successfully. Your faculty account is pending admin approval."
+            )
+        return VerifyEmailResponse(
+            message="Email verified successfully. Your student account is now active."
+        )
 
     async def login_user(self, payload: UserLoginRequest) -> LoginResponse:
         user = await self.user_repository.find_by_email(payload.email.lower())
@@ -208,6 +244,18 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Please verify your email before logging in.",
+            )
+
+        user_status = self._resolve_user_status(user)
+        if user_status != UserStatus.ACTIVE.value:
+            if user_status == UserStatus.PENDING_APPROVAL.value:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Your faculty account is pending admin approval.",
+                )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Your account is not active yet.",
             )
 
         if not user.get("is_active", True):
@@ -238,6 +286,12 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found for this refresh token.",
+            )
+
+        if self._resolve_user_status(user) != UserStatus.ACTIVE.value:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Your account is not active.",
             )
 
         stored_token_hash = hash_refresh_token(refresh_token)

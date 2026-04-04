@@ -8,6 +8,7 @@ const initialFormState = {
   name: "",
   email: "",
   password: "",
+  role: "student",
 };
 
 const pageStyles = {
@@ -117,8 +118,8 @@ function Register() {
             Create your account
           </h1>
           <p style={{ margin: 0, color: "#475569", lineHeight: 1.6 }}>
-            Create your account here. New registrations start as regular users and
-            become active after email verification.
+            Choose whether you are registering as a student or faculty member, then
+            verify your email to continue the onboarding flow.
           </p>
         </div>
 
@@ -162,6 +163,20 @@ function Register() {
             />
           </label>
 
+          <label style={labelStyles}>
+            Who are you?
+            <select
+              style={inputStyles}
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+              required
+            >
+              <option value="student">Student</option>
+              <option value="faculty">Faculty</option>
+            </select>
+          </label>
+
           {error ? (
             <div
               style={{
@@ -190,6 +205,11 @@ function Register() {
               <strong>{success.message}</strong>
               <div style={{ marginTop: "8px" }}>
                 Verification email sent: {success.verification_email_sent ? "Yes" : "No"}
+              </div>
+              <div style={{ marginTop: "8px" }}>
+                {success.user.role === "faculty"
+                  ? "Faculty accounts stay pending admin approval after email verification until a department is assigned."
+                  : "Student accounts become active immediately after email verification."}
               </div>
             </div>
           ) : null}
