@@ -59,8 +59,8 @@ erDiagram
         string name
         string email
         string password_hash
-        enum role "USER, STUDENT, FACULTY, ADMIN"
-        enum user_status "PENDING, ACTIVE"
+        enum role "STUDENT, FACULTY, ADMIN"
+        enum user_status "PENDING_EMAIL_VERIFICATION,PENDING_APPROVAL, ACTIVE"
         boolean is_active
         boolean is_email_verified
         datetime created_at
