@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form
 from app.services.complaint_service import ComplaintService
 from app.schemas.complaint_schema import ComplaintCreate
-from app.core.dependencies import get_current_user
+from app.api.deps import get_current_user
 
 router = APIRouter()
 service = ComplaintService()
