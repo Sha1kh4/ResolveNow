@@ -3,6 +3,7 @@ from datetime import datetime
 from app.config.security import hash_password
 from app.config.database import get_database
 from app.models.user_model import UserRole, UserStatus
+from app.models.department_model import DepartmentName
 
 
 def build_sample_faculty() -> list[dict]:
@@ -20,6 +21,7 @@ def build_sample_faculty() -> list[dict]:
             "refresh_tokens": [],
             "created_at": current_time,
             "updated_at": current_time,
+            "department": DepartmentName.BEHAVIOURAL.value,
         },
         {
             "name": "Prof. Anita Desai",
@@ -33,6 +35,7 @@ def build_sample_faculty() -> list[dict]:
             "refresh_tokens": [],
             "created_at": current_time,
             "updated_at": current_time,
+            "department": DepartmentName.INFRASTRUCTURAL.value,
         },
         {
             "name": "Dr. Rajesh Kumar",
@@ -46,6 +49,7 @@ def build_sample_faculty() -> list[dict]:
             "refresh_tokens": [],
             "created_at": current_time,
             "updated_at": current_time,
+            "department": DepartmentName.ACADEMIC.value,
         },
         {
             "name": "Prof. Sunita Singh",
@@ -59,46 +63,70 @@ def build_sample_faculty() -> list[dict]:
             "refresh_tokens": [],
             "created_at": current_time,
             "updated_at": current_time,
+            "department": DepartmentName.GENERAL.value,
         },
     ]
 
 
 async def seed_faculty() -> None:
     db = get_database()
-    collection = db["users"]
+    user_collection = db["users"]
+    dept_collection = db["departments"]
 
     # Only seed if no faculty exists
-    existing_faculty = await collection.count_documents({"role": UserRole.FACULTY.value})
+    existing_faculty = await user_collection.count_documents({"role": UserRole.FACULTY.value})
     if existing_faculty > 0:
         return
 
-    # Check if the exact emails already exist to avoid duplication
     sample_faculty = build_sample_faculty()
-    faculty_to_insert = []
     
-    for faculty in sample_faculty:
-        existing_user = await collection.find_one({"email": faculty["email"]})
+    for faculty_data in sample_faculty:
+        dept_name = faculty_data.pop("department")
+        existing_user = await user_collection.find_one({"email": faculty_data["email"]})
+        
         if not existing_user:
-            faculty_to_insert.append(faculty)
+            result = await user_collection.insert_one(faculty_data)
+            faculty_id = result.inserted_id
             
-    if faculty_to_insert:
-        await collection.insert_many(faculty_to_insert)
+            # Link faculty to department
+            await dept_collection.update_one(
+                {"name": dept_name},
+                {"$addToSet": {"faculty_user_ids": faculty_id}}
+            )
+        else:
+            # If user exists, still ensure they're linked to the department
+            faculty_id = existing_user["_id"]
+            await dept_collection.update_one(
+                {"name": dept_name},
+                {"$addToSet": {"faculty_user_ids": faculty_id}}
+            )
 
 
 async def insert_missing_sample_faculty() -> dict[str, int]:
     db = get_database()
-    collection = db["users"]
+    user_collection = db["users"]
+    dept_collection = db["departments"]
     sample_faculty = build_sample_faculty()
 
     inserted_count = 0
     skipped_count = 0
 
-    for faculty in sample_faculty:
-        existing_user = await collection.find_one({"email": faculty["email"]})
+    for faculty_data in sample_faculty:
+        dept_name = faculty_data.pop("department")
+        existing_user = await user_collection.find_one({"email": faculty_data["email"]})
+        
         if existing_user:
+            faculty_id = existing_user["_id"]
             skipped_count += 1
-            continue
-        await collection.insert_one(faculty)
-        inserted_count += 1
+        else:
+            result = await user_collection.insert_one(faculty_data)
+            faculty_id = result.inserted_id
+            inserted_count += 1
+            
+        # Ensure faculty is linked to the department
+        await dept_collection.update_one(
+            {"name": dept_name},
+            {"$addToSet": {"faculty_user_ids": faculty_id}}
+        )
 
     return {"inserted": inserted_count, "skipped": skipped_count}
