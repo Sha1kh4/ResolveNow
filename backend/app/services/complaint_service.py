@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from bson.errors import InvalidId
 from fastapi import HTTPException, status
-from bson import ObjectId  # ✅ IMPORTANT
+from bson import ObjectId
 
 from app.repositories.complaint_repository import ComplaintRepository
 from app.repositories.department_repository import DepartmentRepository
@@ -24,7 +24,7 @@ class ComplaintService:
         image_url = None
 
         # 📸 Upload file safely (NO CRASH)
-        if file and settings.aws_access_key_id:
+        if file and settings.aws_access_key_id and settings.aws_secret_access_key:
             try:
                 filename = generate_filename(file.filename)
                 image_url = upload_file(file.file, filename)
@@ -42,6 +42,7 @@ class ComplaintService:
                 detail="Invalid department or user identifier.",
             ) from exc
 
+        # 📂 Validate department
         department = await self.department_repository.find_by_id(department_id)
         if not department:
             raise HTTPException(
@@ -55,33 +56,45 @@ class ComplaintService:
                 detail="No faculty available for the selected department.",
             )
 
-        deadline = datetime.utcnow() + timedelta(days=4)
-        created_at = datetime.utcnow()
-
-        # ✅ FIX: Convert to ObjectId
+        created_at = datetime.now()
+        deadline = created_at + timedelta(days=4)
+        print("Deadline:", deadline)
+        # 🧾 Prepare complaint data (clean & consistent)
         complaint_data = {
             "complaint_id": generate_complaint_ticket_id(),
             "title": data.title,
             "description": data.description,
-            "created_by": ObjectId(user_id),                 # ✅ FIX
-            "department_id": ObjectId(data.department_id),   # ✅ FIX
+            "created_by": created_by,
+            "department_id": department_id,
             "priority": data.priority or ComplaintPriority.MEDIUM,
             "deadline": deadline,
             "image_url": image_url,
+            "status": "OPEN",
+            "created_at": created_at,
+            "updated_at": created_at,
         }
 
-        complaint_data["created_by"] = created_by
-        complaint_data["department_id"] = department_id
-        complaint_data["status"] = "OPEN"
-        complaint_data["created_at"] = created_at
-        complaint_data["updated_at"] = created_at
-
+        # 💾 Save complaint
         created_complaint = await self.repo.create(complaint_data)
+
+        # 👨‍🏫 Assign complaint
         assignment_result = await self.assignment_service.assign_complaint(created_complaint)
-        created_complaint["status"] = assignment_result["status"]
-        created_complaint["assigned_faculty_id"] = assignment_result["faculty_id"]
-        created_complaint["assigned_at"] = assignment_result["assigned_at"]
+
+        if assignment_result:
+            created_complaint["status"] = assignment_result.get("status", "OPEN")
+            created_complaint["assigned_faculty_id"] = assignment_result.get("faculty_id")
+            created_complaint["assigned_at"] = assignment_result.get("assigned_at")
+
         return created_complaint
 
     async def get_user_complaints(self, user_id: str):
-        return await self.repo.get_by_user(user_id)
+        try:
+            user_obj_id = ObjectId(user_id)
+        except InvalidId as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid user identifier.",
+            ) from exc
+        print("user_id:", user_obj_id)
+        print("userid", user_id)
+        return await self.repo.get_by_user(user_obj_id)
