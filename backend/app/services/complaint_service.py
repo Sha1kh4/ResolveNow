@@ -98,3 +98,32 @@ class ComplaintService:
         print("user_id:", user_obj_id)
         print("userid", user_id)
         return await self.repo.get_by_user(user_obj_id)
+
+    async def get_user_complaint_by_id(self, user_id: str, identifier: str):
+        """
+        Return a single complaint by either Mongo _id or complaint_id,
+        ensuring it belongs to the requesting user.
+        """
+        try:
+            user_obj_id = ObjectId(user_id)
+        except InvalidId as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid user identifier.",
+            ) from exc
+
+        complaint = await self.repo.get_one_by_any_id(identifier)
+        if not complaint:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Complaint not found.",
+            )
+
+        # Enforce ownership
+        if str(complaint.get("created_by")) != str(user_obj_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Complaint not found.",
+            )
+
+        return complaint

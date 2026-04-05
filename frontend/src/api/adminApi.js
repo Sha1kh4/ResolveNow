@@ -36,3 +36,8 @@ export const assignFacultyToDepartment = async (payload) => {
   const response = await apiClient.post("/admins/faculty-assignments", payload);
   return response.data;
 };
+
+export const getAdminComplaintDetail = async (id) => {
+  const response = await apiClient.get(`/admins/complaints/${id}`);
+  return response.data;
+};

@@ -252,58 +252,67 @@ function ViewComplaints() {
               }}
             >
               {complaints.map((complaint) => (
-                <article
+                <Link
+                  to={`/admin/complaints/${complaint.id}`}
                   key={complaint.id}
-                  style={{
-                    padding: "24px",
-                    borderRadius: "24px",
-                    backgroundColor: "rgba(255, 255, 255, 0.92)",
-                    boxShadow: "0 18px 44px rgba(15, 23, 42, 0.08)",
-                    border: "1px solid rgba(148, 163, 184, 0.16)",
-                  }}
+                  style={{ textDecoration: "none", color: "inherit" }}
                 >
-                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "12px" }}>
-                    <span
-                      style={{
-                        padding: "6px 10px",
-                        borderRadius: "999px",
-                        backgroundColor: "rgba(14, 116, 144, 0.08)",
-                        color: "#0e7490",
-                        fontSize: "12px",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {complaint.priority}
-                    </span>
-                    <span
-                      style={{
-                        padding: "6px 10px",
-                        borderRadius: "999px",
-                        backgroundColor: "rgba(15, 118, 110, 0.1)",
-                        color: "#0f766e",
-                        fontSize: "12px",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {complaint.status}
-                    </span>
-                  </div>
-                  <div style={{ color: "#64748b", fontSize: "13px", marginBottom: "8px" }}>
-                    {complaint.complaint_id}
-                  </div>
-                  <h2 style={{ margin: "0 0 10px", fontSize: "24px" }}>{complaint.title}</h2>
-                  <p style={{ margin: "0 0 16px", color: "#475569", lineHeight: 1.7 }}>
-                    {complaint.description}
-                  </p>
-                  <div style={{ display: "grid", gap: "8px", color: "#334155" }}>
-                    <div>
-                      <strong>Department:</strong> {complaint.department_name || "Not assigned"}
+                  <article
+                    style={{
+                      padding: "24px",
+                      borderRadius: "24px",
+                      backgroundColor: "rgba(255, 255, 255, 0.92)",
+                      boxShadow: "0 18px 44px rgba(15, 23, 42, 0.08)",
+                      border: "1px solid rgba(148, 163, 184, 0.16)",
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "12px" }}>
+                      <span
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: "999px",
+                          backgroundColor: "rgba(14, 116, 144, 0.08)",
+                          color: "#0e7490",
+                          fontSize: "12px",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {complaint.priority}
+                      </span>
+                      <span
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: "999px",
+                          backgroundColor: "rgba(15, 118, 110, 0.1)",
+                          color: "#0f766e",
+                          fontSize: "12px",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {complaint.status}
+                      </span>
                     </div>
-                    <div>
-                      <strong>Created by:</strong> {complaint.created_by_name || "Unknown"}
+                    <div style={{ color: "#64748b", fontSize: "13px", marginBottom: "8px" }}>
+                      {complaint.complaint_id}
                     </div>
-                  </div>
-                </article>
+                    <h2 style={{ margin: "0 0 10px", fontSize: "24px" }}>{complaint.title}</h2>
+                    <div style={{ display: "grid", gap: "8px", color: "#334155" }}>
+                      <div>
+                        <strong>Department:</strong> {complaint.department_name || "Not assigned"}
+                      </div>
+                      <div>
+                        <strong>Assigned to:</strong> {complaint.assigned_to_name || "Unassigned"}
+                      </div>
+                      <div>
+                        <strong>Created by:</strong> {complaint.created_by_name || "Unknown"}
+                      </div>
+                      <div>
+                        <strong>Created at:</strong>{" "}
+                        {complaint.created_at ? new Date(complaint.created_at).toLocaleString() : "Not available"}
+                      </div>
+                    </div>
+                  </article>
+                </Link>
               ))}
             </div>
 

@@ -4,6 +4,7 @@ import {
   assignFacultyToDepartment,
   getAdminDepartments,
   getAdminUsers,
+  getAdminComplaintDetail,
 } from "../api/adminApi";
 
 export const adminService = {
@@ -21,6 +22,10 @@ export const adminService = {
 
   async getComplaints(params) {
     return getAdminComplaints(params);
+  },
+
+  async getComplaintDetail(id) {
+    return getAdminComplaintDetail(id);
   },
 
   async assignFaculty(payload) {

@@ -8,6 +8,7 @@ from app.models.user_model import UserRole, UserStatus
 from app.repositories.complaint_repository import ComplaintRepository
 from app.repositories.department_repository import DepartmentRepository
 from app.repositories.user_repository import UserRepository
+from app.repositories.facultyAssignmentRepository import FacultyAssignmentRepository
 from app.schemas.admin_schema import (
     AdminComplaintListItem,
     AdminUserListItem,
@@ -25,6 +26,7 @@ class AdminService:
         self.user_repository = UserRepository()
         self.department_repository = DepartmentRepository()
         self.complaint_repository = ComplaintRepository()
+        self.faculty_assignment_repository = FacultyAssignmentRepository()
 
     @staticmethod
     def _map_user(user: dict) -> AdminUserListItem:
@@ -64,6 +66,11 @@ class AdminService:
     ) -> AdminComplaintListItem:
         created_by = users_by_id.get(str(complaint["created_by"]))
         department = departments_by_id.get(str(complaint["department_id"]))
+        assigned_to = None
+        # Prefer temp injected field from list_complaints; fall back to legacy field if present
+        assigned_id = complaint.get("_assigned_faculty_id") or complaint.get("assigned_faculty_id")
+        if assigned_id:
+            assigned_to = users_by_id.get(str(assigned_id))
         return AdminComplaintListItem(
             id=str(complaint["_id"]),
             complaint_id=complaint["complaint_id"],
@@ -74,6 +81,7 @@ class AdminService:
             created_at=complaint["created_at"],
             created_by_name=created_by["name"] if created_by else None,
             department_name=department["name"] if department else None,
+            assigned_to_name=assigned_to["name"] if assigned_to else None,
         )
 
     async def list_regular_users(
@@ -155,7 +163,22 @@ class AdminService:
             limit=page_size,
         )
 
-        user_ids = list({complaint["created_by"] for complaint in complaints})
+        # Build assignment map complaint_id -> faculty_id
+        complaint_ids = [complaint["_id"] for complaint in complaints]
+        assignment_records = await self.faculty_assignment_repository.list_by_complaint_ids(complaint_ids)
+        faculty_by_complaint: dict[str, str] = {}
+        for rec in assignment_records:
+            try:
+                faculty_by_complaint[str(rec["complaint_id"])] = str(rec["faculty_id"])
+            except Exception:
+                continue
+
+        # include both creators and assigned faculty for name lookups
+        user_ids = list({
+            *(complaint["created_by"] for complaint in complaints),
+            *(ObjectId(fid) if hasattr(ObjectId, "is_valid") and isinstance(fid, str) and ObjectId.is_valid(fid) else fid
+              for fid in faculty_by_complaint.values()),
+        })
         department_ids = list({complaint["department_id"] for complaint in complaints})
         users = await self.user_repository.list_by_ids(user_ids)
         departments = await self.department_repository.list_by_ids(department_ids)
@@ -166,7 +189,7 @@ class AdminService:
         return PaginatedAdminComplaintsResponse(
             items=[
                 self._map_complaint(
-                    complaint,
+                    {**complaint, "_assigned_faculty_id": faculty_by_complaint.get(str(complaint["_id"]))},
                     users_by_id=users_by_id,
                     departments_by_id=departments_by_id,
                 )
@@ -176,6 +199,48 @@ class AdminService:
             page_size=page_size,
             total=total,
             total_pages=total_pages,
+        )
+
+    async def get_complaint_detail(self, identifier: str):
+        complaint = await self.complaint_repository.get_one_by_any_id(identifier)
+        if not complaint:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Complaint not found.",
+            )
+        # Fetch related entities
+        created_by_user = await self.user_repository.find_by_id(complaint["created_by"])
+        department = await self.department_repository.find_by_id(complaint["department_id"])
+        # Look up the faculty assignment for this complaint via faculty_assignments collection
+        assigned_to_user = None
+        rec = await self.faculty_assignment_repository.get_by_complaint(complaint["_id"])
+        if rec and rec.get("faculty_id"):
+            assigned_to_user = await self.user_repository.find_by_id(rec["faculty_id"])
+
+        # Collect image URLs (single or multiple)
+        image_urls: list[str] = []
+        if complaint.get("image_url"):
+            image_urls.append(complaint["image_url"])
+        attachments = complaint.get("attachments") or []
+        for att in attachments:
+            url = att.get("file_url")
+            if url:
+                image_urls.append(url)
+
+        from app.schemas.admin_schema import AdminComplaintDetailResponse  # local import to avoid cycle
+        return AdminComplaintDetailResponse(
+            id=str(complaint["_id"]),
+            complaint_id=complaint["complaint_id"],
+            title=complaint["title"],
+            description=complaint["description"],
+            priority=complaint["priority"],
+            status=complaint["status"],
+            created_at=complaint["created_at"],
+            deadline=complaint.get("deadline"),
+            created_by_name=(created_by_user or {}).get("name"),
+            department_name=(department or {}).get("name"),
+            assigned_to_name=(assigned_to_user or {}).get("name"),
+            image_urls=image_urls,
         )
 
     async def assign_faculty_to_department(

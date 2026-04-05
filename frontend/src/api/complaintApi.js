@@ -14,3 +14,8 @@ export const getComplaintDepartments = async () => {
   const response = await apiClient.get("/complaints/departments");
   return response.data;
 };
+
+export const getComplaintById = async (id) => {
+  const response = await apiClient.get(`/complaints/${id}`);
+  return response.data;
+};
