@@ -2,6 +2,7 @@ import {
   createComplaint,
   getComplaintDepartments,
   getMyComplaints,
+  getComplaintById,
 } from "../api/complaintApi";
 
 export const complaintService = {
@@ -15,5 +16,9 @@ export const complaintService = {
 
   async getDepartments() {
     return getComplaintDepartments();
+  },
+
+  async getById(id) {
+    return getComplaintById(id);
   },
 };

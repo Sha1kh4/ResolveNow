@@ -10,6 +10,7 @@ from app.schemas.admin_schema import (
     FacultyAssignmentResponse,
     PaginatedAdminComplaintsResponse,
     PaginatedAdminUsersResponse,
+    AdminComplaintDetailResponse,
 )
 from app.schemas.auth_schema import AdminCreateRequest, AuthUserResponse
 from app.services.admin_service import AdminService
@@ -120,4 +121,19 @@ async def assign_faculty_to_department(
         raise HTTPException(
             status_code=500,
             detail="Unable to assign faculty right now. Please try again.",
+        )
+
+@router.get("/complaints/{id}", response_model=AdminComplaintDetailResponse)
+async def get_complaint_detail(
+    id: str,
+    _: dict = Depends(get_current_admin),
+) -> AdminComplaintDetailResponse:
+    try:
+        return await admin_service.get_complaint_detail(id)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to load complaint detail right now. Please try again.",
         )

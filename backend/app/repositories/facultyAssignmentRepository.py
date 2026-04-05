@@ -27,3 +27,49 @@ class FacultyAssignmentRepository:
             {"department_id": normalized_department_id},
             sort=[("assigned_at", -1)],
         )
+
+    async def get_latest_by_complaint(self, complaint_id: Any) -> Optional[dict[str, Any]]:
+        """
+        Find the most recent faculty assignment record for a given complaint (_id).
+        """
+        normalized_complaint_id = complaint_id
+        if (
+            isinstance(complaint_id, str)
+            and hasattr(ObjectId, "is_valid")
+            and ObjectId.is_valid(complaint_id)
+        ):
+            normalized_complaint_id = ObjectId(complaint_id)
+
+        return await self.collection.find_one(
+            {"complaint_id": normalized_complaint_id},
+            sort=[("assigned_at", -1)],
+        )
+
+    async def get_by_complaint(self, complaint_id: Any) -> Optional[dict[str, Any]]:
+        """
+        Fetch the faculty assignment record for a given complaint.
+        Assumes at most one assignment per complaint.
+        """
+        normalized_complaint_id = complaint_id
+        if (
+            isinstance(complaint_id, str)
+            and hasattr(ObjectId, "is_valid")
+            and ObjectId.is_valid(complaint_id)
+        ):
+            normalized_complaint_id = ObjectId(complaint_id)
+        return await self.collection.find_one({"complaint_id": normalized_complaint_id})
+
+    async def list_by_complaint_ids(self, complaint_ids: list[Any]) -> list[dict[str, Any]]:
+        """
+        Fetch assignment records for multiple complaint ids.
+        """
+        if not complaint_ids:
+            return []
+        normalized_ids: list[Any] = []
+        for cid in complaint_ids:
+            if isinstance(cid, str) and hasattr(ObjectId, "is_valid") and ObjectId.is_valid(cid):
+                normalized_ids.append(ObjectId(cid))
+            else:
+                normalized_ids.append(cid)
+        cursor = self.collection.find({"complaint_id": {"$in": normalized_ids}})
+        return await cursor.to_list(length=None)

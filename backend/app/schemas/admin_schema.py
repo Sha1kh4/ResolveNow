@@ -67,6 +67,7 @@ class AdminComplaintListItem(BaseModel):
     created_at: datetime
     created_by_name: str | None = None
     department_name: DepartmentName | None = None
+    assigned_to_name: str | None = None
 
 
 class PaginatedAdminComplaintsResponse(BaseModel):
@@ -75,3 +76,18 @@ class PaginatedAdminComplaintsResponse(BaseModel):
     page_size: int = Field(..., ge=1)
     total: int = Field(..., ge=0)
     total_pages: int = Field(..., ge=0)
+
+
+class AdminComplaintDetailResponse(BaseModel):
+    id: str
+    complaint_id: str
+    title: str
+    description: str
+    priority: ComplaintPriority
+    status: ComplaintStatus
+    created_at: datetime
+    deadline: datetime | None = None
+    created_by_name: str | None = None
+    department_name: DepartmentName | None = None
+    assigned_to_name: str | None = None
+    image_urls: list[str] = Field(default_factory=list)

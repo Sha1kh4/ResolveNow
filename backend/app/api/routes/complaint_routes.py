@@ -45,3 +45,8 @@ async def list_departments(_: dict = Depends(get_current_user)):
         }
         for department in departments
     ]
+
+
+@router.get("/{id}")
+async def get_complaint_detail(id: str, user=Depends(get_current_user)):
+    return await service.get_user_complaint_by_id(str(user["_id"]), id)
